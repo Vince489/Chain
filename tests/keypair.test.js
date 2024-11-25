@@ -1,6 +1,6 @@
 import * as bip39 from 'bip39';
-import { Keypair } from './keypair.js';
-import { PublicKey } from './publicKey.js';
+import { Keypair } from '../src/keypair.js';
+import { PublicKey } from '../src/publicKey.js';
 
 describe('Keypair Class', () => {
   test('should generate a valid Ed25519 keypair', () => {

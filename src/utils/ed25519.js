@@ -1,3 +1,5 @@
+// Usage: import { generatePrivateKey, generateKeypair, getPublicKey, isOnCurve, sign, verify } from './utils/ed25519.js';
+
 import nacl from 'tweetnacl';
 
 /**

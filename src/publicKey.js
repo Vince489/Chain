@@ -12,12 +12,20 @@ const PUBLIC_KEY_LENGTH = 32;
 export class PublicKey {
   constructor(value) {
     if (typeof value === 'string') {
-      // Decode from Base58 string
-      const decoded = bs58.decode(value);
-      if (decoded.length !== PUBLIC_KEY_LENGTH) {
-        throw new Error('Invalid public key length');
+      try {
+        // Decode from Base58 string
+        const decoded = bs58.decode(value);
+        if (decoded.length !== PUBLIC_KEY_LENGTH) {
+          throw new Error('Invalid public key length');
+        }
+        this._key = decoded;
+      } catch (e) {
+        if (e.message.includes('Non-base58 character') || e.message.includes('invalid character')) {
+          throw new Error('Non-base58 character in public key');
+        } else {
+          throw new Error('Invalid public key length');
+        }
       }
-      this._key = decoded;
     } else if (value instanceof Uint8Array) {
       // Use Uint8Array directly
       if (value.length !== PUBLIC_KEY_LENGTH) {
@@ -28,6 +36,7 @@ export class PublicKey {
       throw new TypeError('PublicKey must be a Base58 string or Uint8Array');
     }
   }
+
 
   /**
    * Get the public key as a Base58 string
