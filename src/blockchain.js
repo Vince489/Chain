@@ -1,78 +1,64 @@
 import { Level } from 'level';
-import BalanceManager from './balanceManager.js';
-import TransactionManager from './transactionManager.js';
-import Block from './block.js';
+
 
 class Blockchain {
   constructor() {
-    this.db = new Level('./blockchain-db'); // Initialize LevelDB for chain storage
-    this.balanceManager = new BalanceManager('./balances-db'); // BalanceManager with unique path
-    this.transactionManager = new TransactionManager('./transactions-db'); // TransactionManager with unique path
-    this.chain = [this.createGenesisBlock()];
-    this.pendingTransactions = [];
+    this.db = new Level('./blockchain-db'); // Initialize LevelDB for storing blockchain state
   }
 
-  createGenesisBlock() {
-    return new Block(0, '0', [], Date.now());
-  }
-
-  getLatestBlock() {
-    return this.chain[this.chain.length - 1];
-  }
-
-  addTransaction(transaction) {
-    if (!this.transactionManager.validateTransaction(transaction)) {
-      throw new Error('Invalid transaction');
-    }
-    this.pendingTransactions.push(transaction);
-  }
-
-  async mineBlock(minerPublicKey) {
-    const rewardTransaction = {
-      sender: 'system',
-      recipient: minerPublicKey,
-      amount: 50_000_000, // 0.5 VRT as mining reward
-    };
-
-    this.pendingTransactions.push(rewardTransaction);
-
-    for (const tx of this.pendingTransactions) {
-      await this.balanceManager.updateBalances(tx);
-      await this.transactionManager.storeTransaction(tx);
-    }
-
-    const newBlock = new Block(
-      this.chain.length,
-      this.getLatestBlock().hash,
-      [...this.pendingTransactions]
-    );
-
-    this.pendingTransactions = [];
-    this.chain.push(newBlock);
-
-    await this.db.put(newBlock.hash, JSON.stringify(newBlock));
-    console.log('Block mined and added to the chain:', newBlock);
-
-    return newBlock;
-  }
-
-  isChainValid() {
-    for (let i = 1; i < this.chain.length; i++) {
-      const currentBlock = this.chain[i];
-      const previousBlock = this.chain[i - 1];
-
-      if (currentBlock.hash !== currentBlock.calculateHash()) {
-        return false;
+  /**
+   * Get the balance for a public key.
+   * @param {string} publicKey - The public key (Base58 encoded).
+   * @returns {Promise<number>} The balance in vinnies.
+   */
+  async getBalance(publicKey) {
+    try {
+      const balance = await this.db.get(publicKey);
+      return parseInt(balance, 10); // Convert to integer
+    } catch (err) {
+      if (err.notFound) {
+        // If no balance exists, return 0
+        return 0;
       }
-
-      if (currentBlock.previousHash !== previousBlock.hash) {
-        return false;
-      }
+      throw err; // Re-throw other errors
     }
-    return true;
+  }
+
+  /**
+   * Update the balance for a public key.
+   * @param {string} publicKey - The public key (Base58 encoded).
+   * @param {number} amount - Amount to adjust the balance by.
+   * @returns {Promise<void>} Resolves when the update is complete.
+   */
+  async updateBalance(publicKey, amount) {
+    const currentBalance = await this.getBalance(publicKey);
+    const newBalance = currentBalance + amount;
+
+    if (newBalance < 0) {
+      throw new Error('Insufficient balance.');
+    }
+
+    await this.db.put(publicKey, newBalance.toString()); // Store balance as a string
+  }
+
+  /**
+   * Process a transaction.
+   * @param {string} sender - Sender's public key (Base58 encoded).
+   * @param {string} recipient - Recipient's public key (Base58 encoded).
+   * @param {number} amount - Amount to transfer in vinnies.
+   * @returns {Promise<void>} Resolves when the transaction is complete.
+   */
+  async processTransaction(sender, recipient, amount) {
+    if (amount <= 0) {
+      throw new Error('Amount must be greater than zero.');
+    }
+
+    // Deduct from sender
+    await this.updateBalance(sender, -amount);
+
+    // Add to recipient
+    await this.updateBalance(recipient, amount);
   }
 }
 
 export default Blockchain;
-
-

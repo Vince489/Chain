@@ -1,16 +1,65 @@
-import {PublicKey} from './src/publicKey.js';
+import level from 'level';
+import bs58 from 'bs58';
+import Keypair from './keypair.js';
 
-// From Base58 string
-const publicKey1 = new PublicKey('6nB4ix7U9T9jXQ9VY5nYNkD91K5rftWkugLg45PYusnk');
+class Blockchain {
+  constructor() {
+    this.db = level('./blockchain-db'); // Initialize LevelDB for storing blockchain state
+  }
 
-// From Uint8Array
-const publicKey2 = new PublicKey(new Uint8Array(32).fill(1));
+  /**
+   * Get the balance for a public key.
+   * @param {string} publicKey - The public key (Base58 encoded).
+   * @returns {Promise<number>} The balance in vinnies.
+   */
+  async getBalance(publicKey) {
+    try {
+      const balance = await this.db.get(publicKey);
+      return parseInt(balance, 10); // Convert to integer
+    } catch (err) {
+      if (err.notFound) {
+        // If no balance exists, return 0
+        return 0;
+      }
+      throw err; // Re-throw other errors
+    }
+  }
 
-console.log(publicKey1.toBase58());  // Base58 string representation
-console.log(publicKey1.toBytes());   // Uint8Array
-console.log(publicKey1.toBuffer());  // Node.js Buffer
-console.log(publicKey1.toString());  // Same as toBase58()
+  /**
+   * Update the balance for a public key.
+   * @param {string} publicKey - The public key (Base58 encoded).
+   * @param {number} amount - Amount to adjust the balance by.
+   * @returns {Promise<void>} Resolves when the update is complete.
+   */
+  async updateBalance(publicKey, amount) {
+    const currentBalance = await this.getBalance(publicKey);
+    const newBalance = currentBalance + amount;
 
-const publicKey3 = new PublicKey('6nB4ix7U9T9jXQ9VY5nYNkD91K5rftWkugLg45PYusnk');
-console.log(publicKey1.equals(publicKey3));  // true
-console.log(publicKey1.equals(publicKey2));  // false
+    if (newBalance < 0) {
+      throw new Error('Insufficient balance.');
+    }
+
+    await this.db.put(publicKey, newBalance.toString()); // Store balance as a string
+  }
+
+  /**
+   * Process a transaction.
+   * @param {string} sender - Sender's public key (Base58 encoded).
+   * @param {string} recipient - Recipient's public key (Base58 encoded).
+   * @param {number} amount - Amount to transfer in vinnies.
+   * @returns {Promise<void>} Resolves when the transaction is complete.
+   */
+  async processTransaction(sender, recipient, amount) {
+    if (amount <= 0) {
+      throw new Error('Amount must be greater than zero.');
+    }
+
+    // Deduct from sender
+    await this.updateBalance(sender, -amount);
+
+    // Add to recipient
+    await this.updateBalance(recipient, amount);
+  }
+}
+
+export default Blockchain;
