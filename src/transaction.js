@@ -1,31 +1,47 @@
+import { Balance } from './balance.js';
+
 class Transaction {
-  constructor(sender, recipient, amount, timestamp, nonce) {
-    this.sender = sender;
-    this.recipient = recipient;
-    this.amount = amount;
-    this.timestamp = timestamp || Date.now();
-    this.nonce = nonce || this.generateNonce();
+  constructor() {
     this.instructions = [];
+    this.recentBlockhash = null;
+    this.feePayer = null;
   }
 
-  // Generate a unique nonce for each transaction
-  generateNonce() {
-    return Math.floor(Math.random() * 1e9); // Simple nonce generator for MVP
-  }
-
-  // Add instructions to the transaction (e.g., fund transfer, contract interaction)
-  addInstruction(instruction) {
+  add(instruction) {
     this.instructions.push(instruction);
   }
 
-  // Validate transaction: Ensure no expiration, check balances, etc.
+  setRecentBlockhash(blockhash) {
+    this.recentBlockhash = blockhash;
+  }
+
   validate() {
-    // You can add validation logic here (e.g., expiration check, balance check)
-    const currentTime = Date.now();
-    if (this.timestamp + 3600000 < currentTime) { // Transaction expired after 1 hour
-      throw new TransactionExpiredTimeoutError("Transaction expired.");
+    if (!this.recentBlockhash) {
+      throw new Error('Recent blockhash is required.');
     }
+    if (!this.feePayer) {
+      throw new Error('Fee payer is required.');
+    }
+    if (this.instructions.length === 0) {
+      throw new Error('At least one instruction is required.');
+    }
+  }
+
+  toJSON() {
+    return {
+      feePayer: this.feePayer.toBase58(),
+      recentBlockhash: this.recentBlockhash,
+      instructions: this.instructions.map((instr) => ({
+        keys: instr.keys,
+        programId: instr.programId.toBase58(),
+        data: instr.data.toString('base64'),
+      })),
+    };
   }
 }
 
+
 export { Transaction };
+
+
+

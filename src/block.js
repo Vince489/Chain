@@ -1,27 +1,19 @@
+// block.js
 import crypto from 'crypto';
 
 class Block {
-  /**
-   * @param {number} index - The block's position in the chain.
-   * @param {string} previousHash - The hash of the previous block.
-   * @param {Array} transactions - List of transactions included in the block.
-   * @param {number} timestamp - Block creation timestamp.
-   */
-  constructor(index, previousHash, transactions, timestamp = Date.now()) {
-    this.index = index;
-    this.previousHash = previousHash;
-    this.transactions = transactions;
-    this.timestamp = timestamp;
-    this.hash = this.calculateHash();
+  constructor(index, transactions, previousHash = null) {
+    this.index = index;  // Block index
+    this.transactions = transactions;  // Transactions in this block
+    this.timestamp = Date.now();  // Timestamp when block is created
+    this.previousHash = previousHash;  // Previous block's hash
+    this.hash = this.calculateHash();  // Block's hash
   }
 
-  /**
-   * Calculate the hash for the block.
-   * @returns {string} The SHA-256 hash of the block's contents.
-   */
+  // Calculate the hash of the block (combines transactions and previous hash)
   calculateHash() {
-    const data = `${this.index}${this.previousHash}${JSON.stringify(this.transactions)}${this.timestamp}`;
-    return crypto.createHash('sha256').update(data).digest('hex');
+    const blockData = `${JSON.stringify(this.transactions)}${this.previousHash}${this.timestamp}`;
+    return crypto.createHash('sha256').update(blockData).digest('hex');
   }
 }
 

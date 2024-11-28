@@ -2,9 +2,7 @@ import Blockchain from './blockchain.js'; // Import your Blockchain class
 import Keypair from './keypair.js'; // Import the Keypair class
 import { Transaction } from './transaction.js'; // Import the Transaction class
 import { TransactionInstruction } from './transactionInstruction.js'; // Import the TransactionInstruction class
-import { SystemProgram } from './src/systemProgram.js'; // Import the SystemProgram class
 import { PublicKey } from './publicKey.js'; // Import PublicKey class
-
 
 (async () => {
   const blockchain = new Blockchain();
@@ -15,6 +13,10 @@ import { PublicKey } from './publicKey.js'; // Import PublicKey class
 
   const senderPublicKey = senderKeypair.publicKey.toBase58();
   const recipientPublicKey = recipientKeypair.publicKey.toBase58();
+
+  // Convert string public keys to PublicKey objects
+  const senderPubkey = new PublicKey(senderPublicKey);
+  const recipientPubkey = new PublicKey(recipientPublicKey);
 
   // Step 1: Initialize balances
   console.log('Initializing balances...');
@@ -29,15 +31,14 @@ import { PublicKey } from './publicKey.js'; // Import PublicKey class
   const transaction = new Transaction(senderPublicKey, recipientPublicKey, 500_000_000); // 5 VRT
 
   // Create a transfer instruction
-
-
-
-const transferInstruction = SystemProgram.transfer({
-  fromPubkey: senderPublicKey,
-  toPubkey: recipientPublicKey,
-  lamports: 1000000, // Amount to transfer
-});
-
+  const transferInstruction = new TransactionInstruction({
+    programId: 'transfer', // Instruction type
+    keys: [
+      { pubkey: senderPubkey, isSigner: true, isWritable: true },
+      { pubkey: recipientPubkey, isSigner: false, isWritable: true },
+    ],
+    data: Buffer.from(JSON.stringify({ amount: 500_000_000 })), // Transfer amount in VRT
+  });
 
   // Validate the instruction
   try {
