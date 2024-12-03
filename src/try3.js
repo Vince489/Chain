@@ -1,4 +1,3 @@
-// try2.js
 import Blockchain from './blockchain.js'; // Import your Blockchain class
 import Keypair from './keypair.js'; // Import the Keypair class
 import { Transaction } from './transaction.js'; // Import the Transaction class
@@ -68,4 +67,18 @@ import { SystemProgram } from '../src/programs/sp3.js'; // Import the SystemProg
   // Verify balances
   console.log(`Sender Updated Balance:`, await blockchain.getBalance(senderPublicKey.toBase58()));
   console.log(`Recipient Updated Balance:`, await blockchain.getBalance(recipientPublicKey.toBase58()));
+
+  // Fetch transactions by sender's public key using the new index
+  const senderTransactions = await blockchain.getTransactionsByPublicKey(senderPublicKey.toBase58());
+  console.log('Sender Transactions:', senderTransactions);
+
+  // Fetch transactions by recipient's public key using the new index
+  const recipientTransactions = await blockchain.getTransactionsByPublicKey(recipientPublicKey.toBase58());
+  console.log('Recipient Transactions:', recipientTransactions);
+
+  // Optionally, fetch a block by transaction ID
+  // (if you have the transaction ID from the processed transaction)
+  const transactionId = transaction.id; // Assuming `transaction.id` is available
+  const block = await blockchain.getBlockByTransactionId(transactionId);
+  console.log('Block containing the transaction:', block);
 })();

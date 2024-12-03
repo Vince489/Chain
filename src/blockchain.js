@@ -1,6 +1,6 @@
 // blockchain.js
-import Block from './block.js';  // Import the Block class
-import { Balance } from './balance.js'; // Assuming Balance manager handles balance logic
+import Block from './block.js'; 
+import { Balance } from './balance.js'; 
 
 class Blockchain {
   constructor() {
