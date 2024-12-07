@@ -1,10 +1,9 @@
-import { Balance } from './balance.js';
-
 class Transaction {
   constructor() {
     this.instructions = [];
     this.recentBlockhash = null;
     this.feePayer = null;
+    this.timestamp = new Date().toISOString(); // Add timestamp for transaction creation
   }
 
   add(instruction) {
@@ -13,6 +12,10 @@ class Transaction {
 
   setRecentBlockhash(blockhash) {
     this.recentBlockhash = blockhash;
+  }
+
+  setFeePayer(feePayer) {
+    this.feePayer = feePayer;
   }
 
   validate() {
@@ -36,12 +39,9 @@ class Transaction {
         programId: instr.programId.toBase58(),
         data: instr.data.toString('base64'),
       })),
+      timestamp: this.timestamp, // Add timestamp to JSON output
     };
   }
 }
 
-
 export { Transaction };
-
-
-

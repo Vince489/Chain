@@ -1,5 +1,6 @@
 // try2.js
 import Blockchain from './blockchain.js'; // Import your Blockchain class
+import Block from './block.js'; // Import the Block class
 import Keypair from './keypair.js'; // Import the Keypair class
 import { Transaction } from './transaction.js'; // Import the Transaction class
 import { TransactionInstruction } from './transactionInstruction.js'; // Import the TransactionInstruction class

@@ -1,6 +1,5 @@
 import { PublicKey } from '../pk2.js'; // Import the PublicKey class
 import { TransactionInstruction } from '../transactionInstruction.js'; // Import the TransactionInstruction class
-import { NonceAccount } from './nonceAccount.js'; // Import the NonceAccount class
 
 class SystemProgram {
   constructor() {}

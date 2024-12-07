@@ -61,3 +61,22 @@ class NonceAccount {
 }
 
 export { NonceAccount };
+
+const authorizedKey = new PublicKey('4eF3bP7ZWsp5kQxXEtsf8aM7xsJj6ZJrXKJmL7iRtEgv');
+const nonceValue = '5DZfb2XErKmDqWj97vYWg8gYaAjH3hr1eEB2siZMWF5z';
+const feeCalculator = new FeeCalculator(1000); // 1000 vinnies per signature
+
+// Create a new NonceAccount
+const nonceAccount = new NonceAccount({
+  authorizedPubkey: authorizedKey,
+  nonce: nonceValue,
+  feeCalculator,
+});
+
+// Serialize the account
+const serializedData = nonceAccount.serialize();
+console.log('Serialized NonceAccount:', serializedData);
+
+// Deserialize the account
+const deserializedNonceAccount = NonceAccount.fromAccountData(serializedData);
+console.log('Deserialized NonceAccount:', deserializedNonceAccount);

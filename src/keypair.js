@@ -1,6 +1,7 @@
 import * as bip39 from 'bip39';
 import nacl from 'tweetnacl';
 import { PublicKey } from './publicKey.js';
+import { generateKeypair, getPublicKey } from './utils/ed25519.js';  // Importing the generateKeypair function
 
 /**
  * A Keypair class for managing public and private keys.
@@ -38,7 +39,11 @@ export class Keypair {
    * @returns {Keypair} A new Keypair instance with generated public and secret keys.
    */
   static generate() {
-    const keypair = nacl.sign.keyPair();
+    const { publicKey, secretKey } = generateKeypair(); // Generate the keypair using the utility function
+    const keypair = {
+      publicKey,
+      secretKey,
+    };
     return new KeypairFromGenerated(keypair);
   }
 
@@ -99,6 +104,36 @@ export class Keypair {
       throw new Error('No mnemonic available to recover from');
     }
     return new Keypair(this._mnemonic);
+  }
+
+  /**
+   * Generate a keypair from a secret key (64-byte).
+   *
+   * @param {Uint8Array} secretKey The 64-byte secret key.
+   * @param {Object} [options] Options for validation.
+   * @returns {Keypair} The keypair generated from the secret key.
+   */
+  static fromSecretKey(secretKey, options) {
+    if (secretKey.byteLength !== 64) {
+      throw new Error('bad secret key size');
+    }
+
+    const publicKey = secretKey.slice(32, 64);
+
+    if (!options || !options.skipValidation) {
+      const privateKey = secretKey.slice(0, 32);
+
+      // Use getPublicKey to derive the public key from the private key
+      const computedPublicKey = getPublicKey(privateKey);
+
+      for (let ii = 0; ii < 32; ii++) {
+        if (publicKey[ii] !== computedPublicKey[ii]) {
+          throw new Error('provided secretKey is invalid');
+        }
+      }
+    }
+
+    return new Keypair({ publicKey, secretKey });
   }
 }
 

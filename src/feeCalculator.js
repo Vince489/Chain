@@ -1,45 +1,32 @@
 class FeeCalculator {
   constructor(vinniesPerSignature = 0) {
-    // Initialize with a default value or a dynamically set value
-    this.vinniesPerSignature = vinniesPerSignature;
-  }
-
-  /**
-   * Set vinniesPerSignature dynamically
-   * @param {number} vinniesPerSignature - Fee per signature in vinnies
-   */
-  setVinniesPerSignature(vinniesPerSignature) {
-    if (vinniesPerSignature < 0) {
-      throw new Error('vinniesPerSignature must be non-negative');
+    if (typeof vinniesPerSignature !== 'number' || vinniesPerSignature < 0) {
+      throw new TypeError('vinniesPerSignature must be a non-negative number');
     }
     this.vinniesPerSignature = vinniesPerSignature;
   }
 
   /**
-   * Get the total fee for a transaction based on the number of required signatures
-   * @param {number} signatureCount - Number of signatures required for the transaction
-   * @returns {number} Total fee in vinnies
+   * Serialize FeeCalculator to a buffer
+   * @returns {Buffer} Serialized data
    */
-  calculateFee(signatureCount) {
-    if (signatureCount < 0) {
-      throw new Error('signatureCount must be non-negative');
-    }
-    return this.vinniesPerSignature * signatureCount;
+  serialize() {
+    const buffer = Buffer.alloc(8); // 8 bytes for a 64-bit number
+    buffer.writeBigUInt64LE(BigInt(this.vinniesPerSignature), 0);
+    return buffer;
   }
 
   /**
-   * Deserialize fee configuration from account data
-   * @param {Buffer | Uint8Array | Array<number>} buffer - Account data containing fee information
+   * Deserialize FeeCalculator from account data
+   * @param {Buffer | Uint8Array | Array<number>} buffer - Serialized data
+   * @returns {FeeCalculator} Deserialized FeeCalculator
    */
   static fromAccountData(buffer) {
     if (!buffer || buffer.length < 8) {
-      throw new Error('Invalid account data');
+      throw new Error('Invalid FeeCalculator data');
     }
-
-    // Assume the vinniesPerSignature is stored as a 64-bit integer in little-endian format
-    const view = new DataView(new Uint8Array(buffer).buffer);
-    const vinniesPerSignature = view.getBigUint64(0, true); // Read as little-endian
-    return new FeeCalculator(Number(vinniesPerSignature));
+    const vinniesPerSignature = Number(buffer.readBigUInt64LE(0));
+    return new FeeCalculator(vinniesPerSignature);
   }
 }
 

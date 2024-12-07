@@ -1,4 +1,4 @@
-import { PublicKey } from './publicKey.js'; // Make sure the PublicKey class is imported
+import { PublicKey } from './publicKey.js';
 
 class TransactionInstruction {
   constructor(opts) {
@@ -8,17 +8,14 @@ class TransactionInstruction {
   }
 
   validate() {
-    // Validate programId as a PublicKey instance
     if (!(this.programId instanceof PublicKey)) {
       throw new Error('Invalid programId: must be an instance of PublicKey');
     }
   
-    // Validate keys array
     if (!Array.isArray(this.keys) || this.keys.length === 0) {
       throw new Error('Keys must be a non-empty array');
     }
   
-    // Validate individual key properties
     this.keys.forEach((key, index) => {
       if (!(key.pubkey instanceof PublicKey)) {
         throw new Error(`Invalid pubkey at index ${index}: must be an instance of PublicKey`);
@@ -31,21 +28,19 @@ class TransactionInstruction {
       }
     });
   
-    // Validate data as a Buffer or Uint8Array
     if (!(Buffer.isBuffer(this.data) || this.data instanceof Uint8Array)) {
       throw new Error('Data must be a Buffer or Uint8Array');
     }
   }
-  
 
   toJSON() {
     return {
       keys: this.keys.map(({ pubkey, isSigner, isWritable }) => ({
-        pubkey,
+        pubkey: pubkey.toBase58(),
         isSigner,
         isWritable,
       })),
-      programId: this.programId,
+      programId: this.programId.toBase58(),
       data: Array.from(this.data),
     };
   }
